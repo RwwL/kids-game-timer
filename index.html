@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>kid-puter timer</title>
+  <style type="text/css">
+    html, body {
+      font-family: sans-serif;
+      padding: 0;
+      margin: 0;
+      text-align: center;
+    }
+    #wrap {
+      width: 100%;
+      position: absolute;
+      left: 0;
+      right: 0;
+    }
+    section {
+      float: left;
+      width: 50%;
+    }
+    #date {
+      color: green;
+    }
+    .clock {
+      color: green;
+      font-size: 90px;
+      margin-bottom: 30px;
+    }
+    .clock.expired {
+      color: red;
+    }
+    button {
+      -webkit-appearance: none;
+      border: solid 1px #555;
+      background: #e0e0e0;
+      color: black;
+      font-size: 30px;
+      padding: .5em 1em;
+      min-width: 200px;
+      border-radius: 100px;
+    }
+    button[disabled] {
+      opacity: .3;
+    }
+  </style>
+  <script src="/modernizr-2.0.6.custom.min.js"></script>
+</head>
+<body>
+  <div id="wrap">
+    <h1>kids' computer time: <span id="date"></span><h1>
+    <section id="violet">
+      <h1>Violet</h1>
+      <div class="clock"></div>
+      <button>Start</button>
+    </section>
+    <section id="graham">
+      <h1>Graham</h1>
+      <div class="clock"></div>
+      <button>Start</button>
+    </section>
+  </div>
+  <script src="jquery-1.7.1.min.js"></script>
+  <script>
+    
+    var STARTING_SECONDS = Math.floor(60 * .1);
+
+    function player(name) {
+      this.name = name;
+      this.seconds = STARTING_SECONDS;
+      this.timer = null;
+    }
+
+    function updateClock(player) {
+      var
+        $clock = $('#'+player.name).find('.clock'),
+        $btn = $('#'+player.name).find('button');
+      --player.seconds;
+      $clock.text( toMinSec( player.seconds ) );
+      if(player.seconds <= 0) {
+        $clock.addClass('expired');
+        clearInterval( player.timer );
+        player.finished = true;
+        $btn[0].disabled = true;
+      }
+      console.log('tick');
+    }
+
+    function toMinSec(totalSeconds) {
+        var
+          minutes = Math.floor(totalSeconds / 60),
+          seconds = Math.floor(totalSeconds % 60);
+        return leadingZero(minutes) + ":" + leadingZero(seconds);
+    }
+
+    function leadingZero(num) {
+        return (num < 10) ? "0" + num : num.toString();
+    }
+
+    var violet = new player('violet');
+    var graham = new player('graham');
+
+    function startTimer(player) {
+      $('#'+player.name).find('button').text('Stop');
+      $('#'+player.name).data('ticking', true);
+      player.timer = setInterval( function(){ updateClock(player) }, 1000 );
+    }
+
+    function stopTimer(player) {
+      if(!player.finished) {
+        $('#'+player.name).find('button').text('Start');
+        $('#'+player.name).data('ticking', false);
+        if (player.timer != null) clearInterval(player.timer);
+      }
+    }
+
+
+    $(document).ready(function(){
+      // set the header
+      var
+        date = new Date();
+      $('#date').text(date.toDateString());
+      
+
+      $('#violet').data('ticking',false).find('.clock').html( toMinSec(violet.seconds) );
+      $('#graham').data('ticking',false).find('.clock').html( toMinSec(graham.seconds) );
+
+
+      $('button').on('click', function(e){
+        var
+          $btn = $(this),
+          $section = $btn.closest('section'),
+          player = $section.attr('id'),
+          ticking = $section.data('ticking');
+        // it's ticking, stop it
+        if(ticking){
+          switch(player){
+            case 'violet':
+              if(!violet.finished) stopTimer(violet);
+              break;
+            case 'graham':
+              if(!graham.finished) stopTimer(graham);
+              break;
+          }
+        }
+        // not ticking; start up this one and stop the other
+        else {
+          switch(player){
+            case 'violet':
+              if(!violet.finished) startTimer(violet);
+              if(!graham.finished) stopTimer(graham);
+              break;
+            case 'graham':
+              if(!graham.finished) startTimer(graham)
+              if(!violet.finished) stopTimer(violet);
+              break;
+          }
+        }
+
+      });
+
+    });
+  </script>
+</body>
+</html>
