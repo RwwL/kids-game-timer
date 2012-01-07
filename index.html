@@ -9,6 +9,7 @@
       padding: 0;
       margin: 0;
       text-align: center;
+      color: #999;
     }
     #wrap {
       width: 100%;
@@ -24,19 +25,32 @@
       color: green;
     }
     .clock {
+      font-family: monospace;
       color: green;
-      font-size: 90px;
+      font-size: 100px;
       margin-bottom: 30px;
     }
     .clock.expired {
       color: red;
+    }
+    h1 {
+      margin: 40px 0;
+    }
+    #violet h1 {
+      color: purple;
+      margin: 0 0 20px 0;
+    }
+    #graham h1 {
+      color: blue;
+      margin: 0 0 20px 0;
     }
     button {
       -webkit-appearance: none;
       border: solid 1px #555;
       background: #e0e0e0;
       color: black;
-      font-size: 30px;
+      font-size: 24px;
+      text-transform: uppercase;
       padding: .5em 1em;
       min-width: 200px;
       border-radius: 100px;
@@ -49,7 +63,7 @@
 </head>
 <body>
   <div id="wrap">
-    <h1>kids' computer time: <span id="date"></span><h1>
+    <h1>kids' computer time for <span id="date"></span><h1>
     <section id="violet">
       <h1>Violet</h1>
       <div class="clock"></div>
@@ -64,7 +78,7 @@
   <script src="jquery-1.7.1.min.js"></script>
   <script>
     
-    var STARTING_SECONDS = Math.floor(60 * .1);
+    var STARTING_SECONDS = Math.floor(60 * 30);
 
     function player(name) {
       this.name = name;
