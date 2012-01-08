@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>kid-puter timer</title>
+  <meta charset="utf-8">
+  <title>kid-puter timer</title>
   <style type="text/css">
     html, body {
-      font-family: sans-serif;
+      font-family: Helvetica  , sans-serif;
       padding: 0;
       margin: 0;
       text-align: center;
@@ -22,13 +22,16 @@
       width: 50%;
     }
     #date {
-      color: green;
+      color: #555;
     }
     .clock {
-      font-family: monospace;
+      font-family: Inconsolata, Menlo, Monaco, "Lucida Sans Typewriter", monospace;
       color: green;
       font-size: 100px;
+      line-height: 120px;
       margin-bottom: 30px;
+      font-weight: bold;
+      text-shadow: 4px 4px 0px #ccc;
     }
     .clock.expired {
       color: red;
@@ -36,34 +39,45 @@
     h1 {
       margin: 40px 0;
     }
+    section h1 {
+      margin: 0 0 20px 0;
+      font-size: 50px;
+    }
     #violet h1 {
       color: purple;
-      margin: 0 0 20px 0;
     }
     #graham h1 {
       color: blue;
-      margin: 0 0 20px 0;
     }
     button {
       -webkit-appearance: none;
-      border: solid 1px #555;
-      background: #e0e0e0;
-      color: black;
+      border: solid 1px #999;
+      background: -webkit-linear-gradient(top, #e0e0e0, #bfbfbf);
+      color: #444;
       font-size: 24px;
       text-transform: uppercase;
       padding: .5em 1em;
       min-width: 200px;
       border-radius: 100px;
+      text-shadow: 1px 1px 0px #fff;
     }
-    button[disabled] {
+    button:hover, button:focus {
+      outline: 0;
+      color: #222;
+      border-color: #222;
+    }
+    button:active {
+      box-shadow: inset 0 3px 5px rgba(0,0,0, .35);
+    }
+    button[disabled], button[disabled]:hover {
       opacity: .3;
+      background: #e0e0e0
     }
   </style>
-  <script src="/modernizr-2.0.6.custom.min.js"></script>
 </head>
 <body>
   <div id="wrap">
-    <h1>kids' computer time for <span id="date"></span><h1>
+    <h1>kids' computer time for <span id="date"></span></h1>
     <section id="violet">
       <h1>Violet</h1>
       <div class="clock"></div>
@@ -76,51 +90,44 @@
     </section>
   </div>
   <script src="jquery-1.7.1.min.js"></script>
-  <script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+
+    // set the header
+    var
+    date = new Date(),
+    dateString = date.toDateString();
+      
+    $('#date').text(dateString);
     
-    var STARTING_SECONDS = Math.floor(60 * 30);
+    if(localStorage.date) {
+      var sameDayReload = dateString === localStorage.getItem('date'); 
+    }
+    localStorage.setItem('date', dateString);
 
     function player(name) {
       this.name = name;
-      this.seconds = STARTING_SECONDS;
+      this.seconds = getStartingSeconds(name);
       this.timer = null;
     }
+    
+    var STARTING_SECONDS = Math.floor(60 * 30);
 
-    function updateClock(player) {
-      var
-        $clock = $('#'+player.name).find('.clock'),
-        $btn = $('#'+player.name).find('button');
-      --player.seconds;
-      $clock.text( toMinSec( player.seconds ) );
-      if(player.seconds <= 0) {
-        $clock.addClass('expired');
-        clearInterval( player.timer );
-        player.finished = true;
-        $btn[0].disabled = true;
+    function getStartingSeconds(playerName) {
+      if(localStorage.getItem(playerName + '-seconds') && sameDayReload) {
+        return localStorage.getItem(playerName + '-seconds');
       }
-      console.log('tick');
+      else {
+        return STARTING_SECONDS;
+      }
     }
-
-    function toMinSec(totalSeconds) {
-        var
-          minutes = Math.floor(totalSeconds / 60),
-          seconds = Math.floor(totalSeconds % 60);
-        return leadingZero(minutes) + ":" + leadingZero(seconds);
-    }
-
-    function leadingZero(num) {
-        return (num < 10) ? "0" + num : num.toString();
-    }
-
-    var violet = new player('violet');
-    var graham = new player('graham');
 
     function startTimer(player) {
       $('#'+player.name).find('button').text('Stop');
       $('#'+player.name).data('ticking', true);
       player.timer = setInterval( function(){ updateClock(player) }, 1000 );
     }
-
+    
     function stopTimer(player) {
       if(!player.finished) {
         $('#'+player.name).find('button').text('Start');
@@ -129,52 +136,75 @@
       }
     }
 
-
-    $(document).ready(function(){
-      // set the header
+    function updateClock(player) {
       var
-        date = new Date();
-      $('#date').text(date.toDateString());
-      
-
-      $('#violet').data('ticking',false).find('.clock').html( toMinSec(violet.seconds) );
-      $('#graham').data('ticking',false).find('.clock').html( toMinSec(graham.seconds) );
-
-
-      $('button').on('click', function(e){
+        $clock = $('#'+player.name).find('.clock'),
+        $btn = $('#'+player.name).find('button');
+      --player.seconds;
+      localStorage.setItem(player.name + '-seconds', player.seconds);
+      $clock.text( toMinSec( player.seconds ) );
+      if(player.seconds <= 0) {
+        $clock.addClass('expired');
+        clearInterval( player.timer );
+        player.finished = true;
+        $btn[0].disabled = true;
+      }
+    }
+    
+    function toMinSec(totalSeconds) {
         var
-          $btn = $(this),
-          $section = $btn.closest('section'),
-          player = $section.attr('id'),
-          ticking = $section.data('ticking');
-        // it's ticking, stop it
-        if(ticking){
-          switch(player){
+          minutes = Math.floor(totalSeconds / 60),
+          seconds = Math.floor(totalSeconds % 60);
+        return leadingZero(minutes) + ":" + leadingZero(seconds);
+    }
+    
+    function leadingZero(num) {
+        return (num < 10) ? "0" + num : num.toString();
+    }
+    
+    // create the players
+    var violet = new player('violet');
+    var graham = new player('graham');
+    
+    // set their clocks to start
+    $('#violet').data('ticking',false).find('.clock').html( toMinSec(violet.seconds) );
+    $('#graham').data('ticking',false).find('.clock').html( toMinSec(graham.seconds) );
+    
+    // bind button click handlers
+    $('button').on('click', function(e){
+      var
+        $btn = $(this),
+        $section = $btn.closest('section'),
+        player = $section.attr('id'),
+        ticking = $section.data('ticking');
+      // it's ticking, stop it
+      if(ticking){
+        switch(player) {
             case 'violet':
               if(!violet.finished) stopTimer(violet);
               break;
             case 'graham':
               if(!graham.finished) stopTimer(graham);
               break;
-          }
         }
-        // not ticking; start up this one and stop the other
-        else {
-          switch(player){
-            case 'violet':
-              if(!violet.finished) startTimer(violet);
+      }
+      // not ticking; start up this one and stop the other
+      else {
+        switch(player){
+          case 'violet':
+            if(!violet.finished) startTimer(violet);
               if(!graham.finished) stopTimer(graham);
-              break;
-            case 'graham':
+            break;
+          case 'graham':
               if(!graham.finished) startTimer(graham)
-              if(!violet.finished) stopTimer(violet);
-              break;
-          }
+            if(!violet.finished) stopTimer(violet);
+            break;
         }
-
-      });
-
+      }
+    
     });
+    
+  });
   </script>
 </body>
 </html>
