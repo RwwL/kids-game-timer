@@ -16,6 +16,8 @@
       position: absolute;
       left: 0;
       right: 0;
+      top: 0;
+      bottom: 0;
     }
     section {
       float: left;
@@ -73,6 +75,18 @@
       opacity: .3;
       background: #e0e0e0
     }
+    #stopAlarm {
+    	position: absolute;
+    	bottom: 50px;
+    	width: 240px;
+    	left: 50%;
+    	margin-left: -120px;
+    	border-color: maroon;
+    	color: white;
+    	font-weight: bold;
+    	text-shadow: 1px 1px 0px #000;
+    	background: -webkit-linear-gradient(top, #D62B2B, #A30000);
+    }
   </style>
 </head>
 <body>
@@ -88,40 +102,37 @@
       <div class="clock"></div>
       <button>Start</button>
     </section>
+    <button id="stopAlarm">Stop Alarm</button>
   </div>
   <script src="jquery-1.7.1.min.js"></script>
   <script type="text/javascript">
   $(document).ready(function(){
 
-    // set the header
-    var
-    date = new Date(),
-    dateString = date.toDateString();
-      
-    $('#date').text(dateString);
-    
-    if(localStorage.date) {
-      var sameDayReload = dateString === localStorage.getItem('date'); 
-    }
-    localStorage.setItem('date', dateString);
+	function createAlarm(){
+		alarm = new Audio(),    	
+    	alarm.loop = true;
+    	alarm.preload = true;
+    	setAlarmSource();
+    	window.alarm = alarm;
+	}
 
+	function setAlarmSource(source){
+		if(source) {
+			alarm.src = source;
+		}
+		else {
+			var index = Math.floor((Math.random()  * 4));
+			alarm.src = alarmSources[index];
+			
+		}
+	}
+	
     function player(name) {
       this.name = name;
       this.seconds = getStartingSeconds(name);
       this.timer = null;
     }
-    
-    var STARTING_SECONDS = Math.floor(60 * 30);
-
-    function getStartingSeconds(playerName) {
-      if(localStorage.getItem(playerName + '-seconds') && sameDayReload) {
-        return localStorage.getItem(playerName + '-seconds');
-      }
-      else {
-        return STARTING_SECONDS;
-      }
-    }
-
+      
     function startTimer(player) {
       $('#'+player.name).find('button').text('Stop');
       $('#'+player.name).data('ticking', true);
@@ -136,19 +147,29 @@
       }
     }
 
-    function updateClock(player) {
+    function updateClock(player, gameStart) {
       var
         $clock = $('#'+player.name).find('.clock'),
         $btn = $('#'+player.name).find('button');
-      --player.seconds;
-      localStorage.setItem(player.name + '-seconds', player.seconds);
-      $clock.text( toMinSec( player.seconds ) );
+      if(!gameStart) --player.seconds;	
       if(player.seconds <= 0) {
         $clock.addClass('expired');
+        $clock.text( toMinSec( 0 ) );
         clearInterval( player.timer );
         player.finished = true;
         $btn[0].disabled = true;
+        if(!gameStart) {
+			alarm.play();
+        	$('#stopAlarm').animate({
+        		opacity: 1
+        	}, 250);
+        }
+        
       }
+      else {
+      	$clock.text( toMinSec( player.seconds ) );
+      }
+      localStorage.setItem(player.name + '-seconds', player.seconds);
     }
     
     function toMinSec(totalSeconds) {
@@ -161,14 +182,61 @@
     function leadingZero(num) {
         return (num < 10) ? "0" + num : num.toString();
     }
+
+    function getStartingSeconds(playerName) {
+      if(localStorage.getItem(playerName + '-seconds') && sameDayReload) {
+        return localStorage.getItem(playerName + '-seconds');
+      }
+      else {
+        return STARTING_SECONDS;
+      }
+    }
+
+	// kickoff...
+    var
+    	date = new Date(),
+    	dateString = date.toDateString(),
+    	alarm = null,
+    	alarmSources = [
+    		'air-raid-siren.mp3',
+    		'alarm-clock-bell.mp3',
+    		'bell-tower.mp3',
+    		'honky.mp3'
+    	];
+
+    $('#date').text(dateString);
+
+	createAlarm();
+
+	$('#stopAlarm')
+		.animate({
+			opacity: 0
+		}, 0)
+		.on('click', function(){
+			$(this).animate({
+				opacity: 0
+			}, 750);
+			alarm.pause();
+			alarm = null,
+			createAlarm();
+		});
+	
+    if(localStorage.date) {
+      var sameDayReload = dateString === localStorage.getItem('date'); 
+    }
+    localStorage.setItem('date', dateString);
+ 
+    var STARTING_SECONDS = Math.floor(60 * 30);
     
     // create the players
     var violet = new player('violet');
     var graham = new player('graham');
     
     // set their clocks to start
-    $('#violet').data('ticking',false).find('.clock').html( toMinSec(violet.seconds) );
-    $('#graham').data('ticking',false).find('.clock').html( toMinSec(graham.seconds) );
+    $('#violet').data('ticking',false);
+    $('#graham').data('ticking',false);
+    updateClock(violet, true);
+    updateClock(graham, true);
     
     // bind button click handlers
     $('button').on('click', function(e){
