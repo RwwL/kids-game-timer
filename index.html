@@ -22,6 +22,8 @@
     section {
       float: left;
       width: 50%;
+      position: relative;
+      padding-bottom: 200px
     }
     #date {
       color: #555;
@@ -75,7 +77,7 @@
       opacity: .3;
       background: #e0e0e0
     }
-    #stopAlarm {
+    .stopAlarm {
     	position: absolute;
     	bottom: 50px;
     	width: 240px;
@@ -95,36 +97,28 @@
     <section id="violet">
       <h1>Violet</h1>
       <div class="clock"></div>
-      <button>Start</button>
+      <button class="timerToggle">Start</button>
+	  <button class="stopAlarm">Stop Alarm</button>
     </section>
     <section id="graham">
       <h1>Graham</h1>
       <div class="clock"></div>
-      <button>Start</button>
+      <button class="timerToggle">Start</button>
+	  <button class="stopAlarm">Stop Alarm</button>
     </section>
-    <button id="stopAlarm">Stop Alarm</button>
+   
   </div>
   <script src="jquery-1.7.1.min.js"></script>
   <script type="text/javascript">
   $(document).ready(function(){
 
-	function createAlarm(){
-		alarm = new Audio(),    	
+	function createAlarm(player){
+		alarm = new Audio(),
     	alarm.loop = true;
     	alarm.preload = true;
-    	setAlarmSource();
-    	window.alarm = alarm;
-	}
-
-	function setAlarmSource(source){
-		if(source) {
-			alarm.src = source;
-		}
-		else {
-			var index = Math.floor((Math.random()  * 4));
-			alarm.src = alarmSources[index];
-			
-		}
+    	alarm.src = 'bell-tower.mp3';
+    	player.alarm = alarm;
+    	$('#'+player.name).append(alarm);
 	}
 	
     function player(name) {
@@ -141,7 +135,7 @@
     
     function stopTimer(player) {
       if(!player.finished) {
-        $('#'+player.name).find('button').text('Start');
+        $('#'+player.name).find('.timerToggle').text('Start');
         $('#'+player.name).data('ticking', false);
         if (player.timer != null) clearInterval(player.timer);
       }
@@ -149,8 +143,9 @@
 
     function updateClock(player, gameStart) {
       var
-        $clock = $('#'+player.name).find('.clock'),
-        $btn = $('#'+player.name).find('button');
+      	$player = $('#'+player.name),
+        $clock = $player.find('.clock'),
+        $btn = $player.find('.timerToggle');
       if(!gameStart) --player.seconds;	
       if(player.seconds <= 0) {
         $clock.addClass('expired');
@@ -159,8 +154,8 @@
         player.finished = true;
         $btn[0].disabled = true;
         if(!gameStart) {
-			alarm.play();
-        	$('#stopAlarm').animate({
+			player.alarm.play();
+        	$player.find('.stopAlarm').animate({
         		opacity: 1
         	}, 250);
         }
@@ -195,20 +190,11 @@
 	// kickoff...
     var
     	date = new Date(),
-    	dateString = date.toDateString(),
-    	alarm = null,
-    	alarmSources = [
-    		'air-raid-siren.mp3',
-    		'alarm-clock-bell.mp3',
-    		'bell-tower.mp3',
-    		'honky.mp3'
-    	];
+    	dateString = date.toDateString();
 
     $('#date').text(dateString);
 
-	createAlarm();
-
-	$('#stopAlarm')
+	$('.stopAlarm')
 		.animate({
 			opacity: 0
 		}, 0)
@@ -216,9 +202,10 @@
 			$(this).animate({
 				opacity: 0
 			}, 750);
+			var
+				$player = $(this).closest('section'),
+				alarm = $player.find('audio')[0];
 			alarm.pause();
-			alarm = null,
-			createAlarm();
 		});
 	
     if(localStorage.date) {
@@ -231,6 +218,9 @@
     // create the players
     var violet = new player('violet');
     var graham = new player('graham');
+
+	createAlarm(violet);
+	createAlarm(graham);
     
     // set their clocks to start
     $('#violet').data('ticking',false);
@@ -239,7 +229,7 @@
     updateClock(graham, true);
     
     // bind button click handlers
-    $('button').on('click', function(e){
+    $('.timerToggle').on('click', function(e){
       var
         $btn = $(this),
         $section = $btn.closest('section'),
