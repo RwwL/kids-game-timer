@@ -213,7 +213,7 @@
     }
     localStorage.setItem('date', dateString);
  
-    var STARTING_SECONDS = Math.floor(60 * 30);
+    var STARTING_SECONDS = Math.floor(60 * .1);
     
     // create the players
     var violet = new player('violet');
@@ -250,12 +250,10 @@
       else {
         switch(player){
           case 'violet':
-            if(!violet.finished) startTimer(violet);
-              if(!graham.finished) stopTimer(graham);
+          	if(!violet.finished) startTimer(violet);
             break;
           case 'graham':
-              if(!graham.finished) startTimer(graham)
-            if(!violet.finished) stopTimer(violet);
+            if(!graham.finished) startTimer(graham)
             break;
         }
       }
