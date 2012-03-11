@@ -234,30 +234,11 @@
         $btn = $(this),
         $section = $btn.closest('section'),
         player = $section.attr('id'),
+        playerObj = player === 'violet' ? violet : graham,
         ticking = $section.data('ticking');
       // it's ticking, stop it
-      if(ticking){
-        switch(player) {
-            case 'violet':
-              if(!violet.finished) stopTimer(violet);
-              break;
-            case 'graham':
-              if(!graham.finished) stopTimer(graham);
-              break;
-        }
-      }
-      // not ticking; start up this one and stop the other
-      else {
-        switch(player){
-          case 'violet':
-          	if(!violet.finished) startTimer(violet);
-            break;
-          case 'graham':
-            if(!graham.finished) startTimer(graham)
-            break;
-        }
-      }
-    
+      if(ticking && !playerObj.finished) stopTimer(playerObj);
+      else if (!playerObj.finshed) startTimer(playerObj);
     });
     
   });
